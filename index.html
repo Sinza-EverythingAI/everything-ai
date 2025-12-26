@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Everything AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #0f162e;
+      --border: #1c2544;
+      --text: #eaf0ff;
+      --muted: #9db2d7;
+      --accent: #5b8cff;
+      --accent2: #9b6cff;
+      --danger: #ff5b6c;
+      --success: #4ad074;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; background: #070c19; color: var(--text); min-height: 100vh; display: flex; }
+    .app { display: grid; grid-template-columns: 280px minmax(0, 1fr); width: 100%; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: minmax(0, 1fr); }
+      .sidebar { position: fixed; inset: 0 auto 0 0; width: 280px; transform: translateX(-100%); transition: transform .2s ease; z-index: 20; }
+      .sidebar--open { transform: translateX(0); }
+      .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; z-index: 15; }
+      .sidebar-backdrop--visible { display: block; }
+      .menu-btn { display: inline-flex !important; }
+    }
+    .sidebar { background: var(--bg); border-right: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .sidebar-title { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .home-btn, .new-btn { border-radius: 12px; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 8px 10px; font-size: 12px; cursor: pointer; }
+    .home-btn:hover, .new-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .history { display: flex; flex-direction: column; gap: 6px; }
+    .history-item { border: 1px solid transparent; background: transparent; color: var(--text); padding: 8px; border-radius: 10px; font-size: 12px; text-align: left; cursor: pointer; }
+    .history-item:hover { border-color: var(--border); background: var(--panel); }
+    .main { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 30% 20%, var(--accent), var(--accent2)); box-shadow: 0 0 14px rgba(91,140,255,.6); }
+    .tag { font-size: 11px; color: var(--muted); }
+    .menu-btn { display: none; width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); align-items: center; justify-content: center; cursor: pointer; }
+    .mode-pill, .user-pill { border: 1px solid var(--border); background: var(--panel); border-radius: 999px; padding: 6px 10px; font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(91,140,255,.7); }
+    .greet { margin-top: 6px; }
+    .g1 { font-size: 18px; font-weight: 600; }
+    .g2 { font-size: 13px; color: var(--muted); }
+    .panel { border: 1px solid var(--border); background: linear-gradient(120deg, #0d1429, #0b1225); border-radius: 16px; padding: 14px; }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
+    .chips { border: 1px solid var(--border); background: var(--panel); border-radius: 999px; padding: 3px; display: inline-flex; gap: 4px; }
+    .chip { border: none; background: transparent; color: var(--muted); padding: 6px 10px; font-size: 11px; border-radius: 999px; cursor: pointer; }
+    .chip.active { background: rgba(91,140,255,.15); color: var(--text); }
+    .input-wrap { position: relative; flex: 1 1 auto; }
+    .input { width: 100%; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 999px; padding: 10px 40px 10px 12px; font-size: 14px; outline: none; }
+    .input:focus { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(91,140,255,.7), 0 0 16px rgba(91,140,255,.2); }
+    .search-ico { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; }
+    .btn { border: none; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 600; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 0 14px rgba(91,140,255,.6); cursor: pointer; }
+    .meta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; flex-wrap: wrap; gap: 6px; }
+    .pill { border: 1px solid var(--border); background: var(--panel); border-radius: 999px; padding: 4px 10px; display: inline-flex; gap: 6px; align-items: center; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) 280px; gap: 14px; margin-top: 10px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+    .answer { border: 1px solid var(--border); background: var(--panel); border-radius: 16px; padding: 14px; min-height: 220px; display: flex; flex-direction: column; gap: 8px; }
+    .answer h3 { font-size: 14px; }
+    .answer .sub { font-size: 11px; color: var(--muted); }
+    .answer .tag { border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--muted); }
+    .answer .body { font-size: 13px; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+    .answer .foot { margin-top: auto; font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .side { border: 1px solid var(--border); background: var(--panel); border-radius: 16px; padding: 12px; font-size: 12px; color: var(--text); }
+    .side .title { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .model-item { border: 1px solid var(--border); border-radius: 10px; padding: 8px; margin-top: 6px; }
+    .footer { font-size: 10px; color: var(--muted); text-align: center; margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div class="sidebar-backdrop" id="sbBackdrop"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="sidebar-title">Navigation</div>
+      <button class="home-btn" id="homeBtn">⌂ Home</button>
+    </div>
+    <button class="new-btn" id="newBtn">＋ New conversation</button>
+    <div class="sidebar-title" style="margin-top:6px;">History</div>
+    <div class="history" id="history"></div>
+    <div style="margin-top:auto;font-size:10px;color:var(--muted);">Everything AI · Local prototype</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="brand">
+        <button class="menu-btn" id="menuBtn">☰</button>
+        <div class="logo"></div>
+        <div>
+          <div style="font-weight:600;">Everything AI</div>
+          <div class="tag">One question. One synthesized answer.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="mode-pill"><span class="dot"></span><span id="modeLabel">Balanced</span></div>
+        <div class="user-pill"><span style="background:#111a35;border:1px solid var(--border);width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--text);">SZ</span> <span>Sinza</span></div>
+      </div>
+    </header>
+
+    <section class="greet">
+      <div class="g1" id="g1">Good day, Sinza.</div>
+      <div class="g2">What are we doing today?</div>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <div class="tag">Ask anything</div>
+        <div class="chips" id="chips">
+          <button class="chip active" data-mode="balanced">Balanced</button>
+          <button class="chip" data-mode="factual">Factual</button>
+          <button class="chip" data-mode="creative">Creative</button>
+          <button class="chip" data-mode="fast">Fast</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px;">
+        <div class="input-wrap">
+          <input class="input" id="q" placeholder='Ask… e.g. "Explain quantum entanglement simply."' />
+          <span class="search-ico">⌕</span>
+        </div>
+        <button class="btn" id="ask"><span id="askLabel">Research</span></button>
+      </div>
+
+      <div class="meta">
+        <div>Multi‑model orchestration · Local only</div>
+        <div class="pill"><span class="dot" id="cdDot" style="background:#6a7390; box-shadow:none;"></span><span id="cdText">Idle</span></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <section class="answer" id="answer">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;">
+          <div>
+            <h3 id="aTitle">No question yet</h3>
+            <div class="sub" id="aSub">Ask something to see a synthesized answer here.</div>
+          </div>
+          <div class="tag" id="aTag">Ready</div>
+        </div>
+        <div class="body" id="aBody">Your answers will appear here.</div>
+        <div class="foot">
+          <span id="aLeft">Waiting for your first question.</span>
+          <span id="aRight">Models: —</span>
+        </div>
+      </section>
+
+      <aside class="side">
+        <div class="title">Model contributions</div>
+        <div class="pill" style="margin-top:6px;"><span class="dot" id="bkDot" style="background:#6a7390; box-shadow:none;"></span><span id="bkTxt">Backend idle</span></div>
+        <div id="models"></div>
+      </aside>
+    </section>
+
+    <div class="footer">Prototype UI — designed to be fast, clean, and expandable.</div>
+  </main>
+</div>
+
+<script>
+function greet() {
+  const h = new Date().getHours();
+  const el = document.getElementById("g1");
+  el.textContent = h < 5 ? "Still up, Sinza?" : h < 12 ? "Good morning, Sinza." : h < 18 ? "Good afternoon, Sinza." : "Good evening, Sinza.";
+}
+greet();
+
+let mode = "balanced";
+document.getElementById("chips").addEventListener("click", (e) => {
+  const btn = e.target.closest(".chip");
+  if (!btn) return;
+  document.querySelectorAll(".chip").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  mode = btn.dataset.mode;
+  document.getElementById("modeLabel").textContent = btn.textContent;
+});
+
+const sb = document.getElementById("sidebar");
+const sbBackdrop = document.getElementById("sbBackdrop");
+document.getElementById("menuBtn")?.addEventListener("click", () => {
+  sb.classList.toggle("sidebar--open");
+  sbBackdrop.classList.toggle("sidebar-backdrop--visible");
+});
+sbBackdrop.addEventListener("click", () => {
+  sb.classList.remove("sidebar--open");
+  sbBackdrop.classList.remove("sidebar-backdrop--visible");
+});
+
+const q = document.getElementById("q");
+const ask = document.getElementById("ask");
+const askLabel = document.getElementById("askLabel");
+const cdDot = document.getElementById("cdDot");
+const cdText = document.getElementById("cdText");
+const aTitle = document.getElementById("aTitle");
+const aSub = document.getElementById("aSub");
+const aTag = document.getElementById("aTag");
+const aBody = document.getElementById("aBody");
+const aLeft = document.getElementById("aLeft");
+const aRight = document.getElementById("aRight");
+const bkDot = document.getElementById("bkDot");
+const bkTxt = document.getElementById("bkTxt");
+const modelsDiv = document.getElementById("models");
+const historyDiv = document.getElementById("history");
+const homeBtn = document.getElementById("homeBtn");
+const newBtn = document.getElementById("newBtn");
+
+let history = [];
+function resetSession() {
+  q.value = "";
+  aTitle.textContent = "No question yet";
+  aSub.textContent = "Ask something to see a synthesized answer here.";
+  aTag.textContent = "Ready";
+  aBody.textContent = "Your answers will appear here.";
+  aLeft.textContent = "Waiting for your first question.";
+  aRight.textContent = "Models: —";
+  modelsDiv.innerHTML = "";
+  bkTxt.textContent = "Backend idle";
+  bkDot.style.background = "#6a7390"; bkDot.style.boxShadow = "none";
+}
+homeBtn.addEventListener("click", resetSession);
+newBtn.addEventListener("click", resetSession);
+
+function renderHistory() {
+  historyDiv.innerHTML = "";
+  if (history.length === 0) {
+    const p = document.createElement("div");
+    p.style.color = "var(--muted)";
+    p.style.fontSize = "12px";
+    p.textContent = "No history yet.";
+    historyDiv.appendChild(p);
+    return;
+  }
+  history.forEach((h, i) => {
+    const btn = document.createElement("button");
+    btn.className = "history-item";
+    btn.textContent = `${h.question}`;
+    btn.addEventListener("click", () => {
+      aTitle.textContent = h.question;
+      aBody.textContent = h.answer;
+      aSub.textContent = "Loaded from history.";
+      aTag.textContent = "History";
+      aLeft.textContent = `Mode: ${h.mode}`;
+      aRight.textContent = `Models: ${h.models.length}`;
+      modelsDiv.innerHTML = "";
+      h.models.forEach(m => {
+        const d = document.createElement("div");
+        d.className = "model-item";
+        d.innerHTML = `<div style="display:flex;justify-content:space-between;"><div>${m.name}</div><div style="color:var(--muted);font-size:11px;">Score: ${typeof m.score === "number" ? m.score.toFixed(3) : "—"}</div></div><div style="color:var(--muted);font-size:11px;">${m.meta?.role || ""}</div>`;
+        modelsDiv.appendChild(d);
+      });
+    });
+    historyDiv.appendChild(btn);
+  });
+}
+renderHistory();
+
+function countdown(seconds = 3) {
+  let r = seconds;
+  cdText.textContent = `~${r}s remaining`;
+  cdDot.style.background = "var(--accent)";
+  cdDot.style.boxShadow = "0 0 6px rgba(91,140,255,.7)";
+  return new Promise(resolve => {
+    const int = setInterval(() => {
+      r -= 1;
+      if (r > 0) cdText.textContent = `~${r}s remaining`;
+      else { clearInterval(int); cdText.textContent = "Finalizing…"; resolve(); }
+    }, 1000);
+  });
+}
+
+async function sendQuestion() {
+  const question = q.value.trim();
+  if (!question) { alert("Please type a question first."); return; }
+
+  ask.disabled = true; askLabel.textContent = "Thinking…";
+  aTitle.textContent = "Working on your question…";
+  aSub.textContent = "Orchestrating multiple models.";
+  aTag.textContent = "Processing";
+  aBody.textContent = "";
+  aLeft.textContent = "Contacting backend…";
+  bkTxt.textContent = "Talking to backend…";
+  bkDot.style.background = "var(--accent)"; bkDot.style.boxShadow = "0 0 6px rgba(91,140,255,.7)";
+
+  const cd = countdown(3);
+
+  try {
+    const resp = await fetch("http://127.0.0.1:5000/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, mode })
+    });
+    const data = await resp.json();
+    await cd;
+
+    if (data.error) throw new Error(data.message || "Backend error");
+
+    aTitle.textContent = question;
+    aSub.textContent = "Synthesized from multiple model perspectives.";
+    aTag.textContent = mode[0].toUpperCase() + mode.slice(1);
+    aBody.textContent = data.answer || data.final_answer || "(No answer returned.)";
+
+    const models = data.models || [];
+    aLeft.textContent = `Received ${models.length} contributions.`;
+    aRight.textContent = `Models: ${models.map(m => m.name).join(", ") || "—"}`;
+    modelsDiv.innerHTML = "";
+    models.forEach(m => {
+      const d = document.createElement("div");
+      d.className = "model-item";
+      d.innerHTML = `<div style="display:flex;justify-content:space-between;"><div>${m.name}</div><div style="color:var(--muted);font-size:11px;">Score: ${typeof m.score === "number" ? m.score.toFixed(3) : "—"}</div></div><div style="color:var(--muted);font-size:11px;">${m.meta?.role || ""}</div>`;
+      modelsDiv.appendChild(d);
+    });
+
+    history.push({ question, answer: aBody.textContent, mode, models });
+    renderHistory();
+
+    bkTxt.textContent = "Backend ready";
+    bkDot.style.background = "var(--success)"; bkDot.style.boxShadow = "0 0 6px rgba(74,208,116,.7)";
+    cdText.textContent = "Done";
+  } catch (e) {
+    await cd;
+    aTitle.textContent = "Connection issue";
+    aSub.textContent = "Could not reach the backend.";
+    aTag.textContent = "Error";
+    aBody.textContent = "Make sure app.py is running on http://127.0.0.1:5000 or update the URL.";
+    aLeft.textContent = "No response from backend.";
+    bkTxt.textContent = "Backend unreachable";
+    bkDot.style.background = "var(--danger)"; bkDot.style.boxShadow = "0 0 6px rgba(255,91,108,.7)";
+    cdText.textContent = "Error";
+  } finally {
+    ask.disabled = false; askLabel.textContent = "Research";
+  }
+}
+
+ask.addEventListener("click", sendQuestion);
+q.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); sendQuestion(); } });
+</script>
+</body>
+</html>
